@@ -1,0 +1,75 @@
+@{
+  Layout = "_GuestLayout";
+}
+<section class="vh-100 d-flex align-items-center justify-content-center bg-light">
+  <div class="card shadow-lg p-5" style="width: 700px; border-radius: 20px;">
+    <h3 class="text-center mb-4 fw-bold">Tạo tài khoản</h3>
+
+    <form method="POST" action="/auth/register" enctype="multipart/form-data">
+      <div class="row g-3">
+        <div class="col-6">
+          <label class="form-label fw-semibold">Full Name</label>
+          <input type="text" class="form-control" name="fullname" required>
+        </div>
+
+        <div class="col-6">
+          <label class="form-label fw-semibold">Email</label>
+          <input type="email" class="form-control" name="email" required>
+        </div>
+
+        <div class="col-6">
+          <label class="form-label fw-semibold">Address</label>
+          <input type="text" class="form-control" name="address">
+        </div>
+
+        <div class="col-6">
+          <label class="form-label fw-semibold">City</label>
+          <select class="form-select" name="city">
+            <option selected disabled>Select one</option>
+            <option>New Delhi</option>
+            <option>Istanbul</option>
+            <option>Jakarta</option>
+          </select>
+        </div>
+
+        <div class="col-6">
+          <label class="form-label fw-semibold">Phone number</label>
+          <input type="text" class="form-control" name="sdt">
+        </div>
+
+        <div class="col-6">
+          <label class="form-label fw-semibold">Username</label>
+          <input type="text" class="form-control" name="uname" required>
+        </div>
+
+        <div class="col-6">
+          <label class="form-label fw-semibold">Avatar</label>
+          <input type="file" class="form-control" name="avt" id="avt" accept="image/*">
+        </div>
+
+        <div class="col-6 d-flex justify-content-center align-items-center">
+          <img id="preview-avt"
+               src="https://dummyimage.com/150x150/ced4da/ffffff.png&text=Avatar"
+               class="img-fluid rounded-circle border border-3 border-primary"
+               style="width: 150px; height: 150px; object-fit: cover;">
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary w-100 btn-lg mt-4">Đăng ký</button>
+
+      <p class="text-center text-muted mt-3">
+        Đã có tài khoản?
+        <a href="/auth/login" class="fw-bold text-decoration-none">Đăng nhập</a>
+      </p>
+    </form>
+  </div>
+</section>
+<script>
+  document.getElementById("avt").addEventListener("change", function (e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const img = document.getElementById("preview-avt");
+    img.src = URL.createObjectURL(file);
+  });
+</script>
