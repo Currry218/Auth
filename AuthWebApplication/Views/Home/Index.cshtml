@@ -1,8 +1,100 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model AuthWebApplication.Models.User
+@{
+  ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<h1>PROFILE </h1>
+<section style="background-color: #eee;">
+  <div class="container py-5">
+    <div class="row">
+      <div class="col-lg-4">
+        <div class="card mb-4">
+          <div class="card-body text-center">
+            <img src="@(Model.Avatar != null ? Model.Avatar : "/img/user.png")" alt="avatar"
+              class="rounded-circle img-fluid" style="width: 150px;">
+
+            <h5 class="my-3">@Model.Username</h5>
+            <div class="d-flex justify-content-center mb-2">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-8">
+        <div class="card mb-4">
+          <div class="card-body">
+            <div class="row">
+              <div class="col-sm-3">
+                <p class="mb-0">Họ tên</p>
+              </div>
+              <div class="col-sm-9">
+                <p class="text-muted mb-0">@Model.FullName</p>
+              </div>
+            </div>
+            <hr>
+            <div class="row">
+              <div class="col-sm-3">
+                <p class="mb-0">Email</p>
+              </div>
+              <div class="col-sm-9">
+                <p class="text-muted mb-0">@Model.Email</p>
+              </div>
+            </div>
+            <hr>
+            <div class="row">
+              <div class="col-sm-3">
+                <p class="mb-0">Số điện thoại</p>
+              </div>
+              <div class="col-sm-9">
+                <p class="text-muted mb-0">@Model.PhoneNumber</p>
+              </div>
+            </div>
+            <hr>
+            <div class="row">
+              <div class="col-sm-3">
+                <p class="mb-0">Địa chỉ</p>
+              </div>
+              <div class="col-sm-9">
+                <p class="text-muted mb-0">@Model.Address</p>
+              </div>
+            </div>
+            <hr>
+            <div class="row">
+              <div class="col-sm-3">
+                <p class="mb-0">Phòng ban</p>
+              </div>
+              <div class="col-sm-9">
+                <p class="text-muted mb-0">@Model.Role</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        @* TODO MAKE A CHANGE PASSWORD CARD *@
+        <div class="card mb-4">
+          <div class="card-title">Đổi mật khẩu</div>
+          <div class="card-body">
+            <form>
+              <div class="mb-3">
+                <label for="" class="form-label">Mật khẩu cũ</label>
+                <input type="password" class="form-control" name="" id="" placeholder="" />
+              </div>
+              <div class="mb-3">
+                <label for="" class="form-label">Mật khẩu mới</label>
+                <input type="password" class="form-control" name="" id="" placeholder="" />
+              </div>
+              <div class="d-grid gap-2">
+                <button type="Submit" name="" id="" class="btn btn-dark">
+                  Đổi mật khẩu
+                </button>
+              </div>
+
+            </form>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>

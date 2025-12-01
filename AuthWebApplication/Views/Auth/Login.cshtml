@@ -1,6 +1,3 @@
-@{
-  Layout = "_GuestLayout";
-}
 <div class="vh-100 d-flex align-items-center justify-content-center bg-light">
   <div class="card shadow-lg p-4" style="width: 420px; border-radius: 20px;">
     <h3 class="text-center mb-4 fw-bold">Đăng nhập</h3>
@@ -8,24 +5,30 @@
     <form method="POST" action="/Auth/Login">
       <div class="mb-3">
         <label for="login-name" class="form-label fw-semibold">Tên đăng nhập</label>
-        <input type="text" id="loginname" name="loginname" class="form-control form-control-lg"
-          placeholder="Username hoặc Email" required>
+        <input type="text" id="loginname" name="loginname" class="form-control" placeholder="Username hoặc Email"
+          required>
       </div>
 
       <div class="mb-2">
         <label class="form-label fw-semibold">Mật khẩu</label>
-        <input type="password" id="password" name="password" class="form-control form-control-lg" required>
+
+        <div class="input-group mb-3">
+          <input type="password" id="password" name="password" class="form-control" required>
+          <button class="btn btn-outline-secondary bi bi-eye-slash" type="button" id="togglePassword">
+          </button>
+        </div>
       </div>
 
-      <div class="d-flex justify-content-between mb-4">
-        <div class="form-check">
+      <div class="d-flex justify-content-end mb-4">
+        @* <div class="form-check">
           <input class="form-check-input" type="checkbox" id="remember" checked>
           <label class="form-check-label" for="remember">Ghi nhớ</label>
-        </div>
-        <a href="#" class="text-primary text-decoration-none">Quên mật khẩu?</a>
+        </div> *@
+        <a href="#" class="text-primary text-decoration-none" data-bs-toggle="modal" data-bs-target="#modalId">Quên mật
+          khẩu?</a>
       </div>
 
-      <button type="submit" class="btn btn-primary w-100 btn-lg mb-3">Đăng nhập</button>
+      <button type="submit" class="btn btn-dark w-100 btn-lg mb-3">Đăng nhập</button>
     </form>
 
     <p class="text-center mb-2">Chưa có tài khoản?
@@ -43,6 +46,59 @@
         </button>
       </div>
     </div>
-
   </div>
 </div>
+
+
+<!-- Modal Body -->
+<!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
+<div class="modal fade" id="modalId" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog"
+  aria-labelledby="modalTitleId" aria-hidden="true">
+  <form action="/Auth/ForgotPassword" method="POST">
+    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-sm" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          @* <h5 class="modal-title" id="modalTitleId">
+          Modal title
+        </h5> *@
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+
+          <label for="login-name" class="form-label fw-semibold">Nhập username hoặc Email</label>
+          <input type="text" id="account" name="account" class="form-control" placeholder="Username hoặc Email"
+            required>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            Close
+          </button>
+          <button type="submit" class="btn btn-dark">Save</button>
+  </form>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Optional: Place to the bottom of scripts -->
+<script>
+  const myModal = new bootstrap.Modal(
+    document.getElementById("modalId"),
+    options,
+  );
+</script>
+
+
+<script>
+  const togglePassword = document.querySelector('#togglePassword');
+
+  togglePassword.addEventListener('click', () => {
+    const password = document.querySelector('#password');
+    const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+    password.setAttribute('type', type);
+
+    togglePassword.classList.toggle('bi-eye');
+    togglePassword.classList.toggle('bi-eye-slash');
+  });
+</script>
