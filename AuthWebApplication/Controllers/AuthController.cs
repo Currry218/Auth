@@ -1,16 +1,27 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using AuthWebApplication.Models;
-using CloudinaryDotNet;
-using CloudinaryDotNet.Actions;
+using Microsoft.AspNetCore.Authentication;
+using System.Security.Claims;
 using dotenv.net;
 
+using CloudinaryDotNet;
+using CloudinaryDotNet.Actions;
+
+using MailKit.Net.Smtp;
+using MailKit;
+using MimeKit;
+
+using AuthWebApplication.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication.Cookies;
+// using AuthWebApplication.Data;
+// [Route("api/auth")]
+// [ApiController]
 public class AuthController : Controller
 {
     private readonly AuthContext _db;
     private readonly ILogger<AuthController> _logger;
-    private readonly PasswordHasher<User> _hasher = new();
-    private Cloudinary cloudinary;
+    private Cloudinary _cloudinary;
 
     public AuthController(AuthContext db, ILogger<AuthController> logger)
     {
@@ -18,44 +29,68 @@ public class AuthController : Controller
         _logger = logger;
 
         DotEnv.Load(options: new DotEnvOptions(probeForEnv: true));
-        cloudinary = new Cloudinary(Environment.GetEnvironmentVariable("CLOUDINARY_URL"));
-        cloudinary.Api.Secure = true;
+        _cloudinary = new Cloudinary(Environment.GetEnvironmentVariable("CLOUDINARY_URL"));
+        _cloudinary.Api.Secure = true;
     }
 
     [HttpGet]
-    public IActionResult Login() => View();
+    public IActionResult Login()
+    {
+        var u = HttpContext.User.FindFirstValue(ClaimTypes.Name);
+        if(u != null) return RedirectToAction("Index","Home");
+        return View();
+    } 
 
     [HttpGet]
     public IActionResult Index() => RedirectToAction("Login");
 
     [HttpGet]
-    public IActionResult Register() => View();
+    public IActionResult Register() {
+        var u = HttpContext.User.FindFirstValue(ClaimTypes.Name);
+        if(u != null) return RedirectToAction("Index","Home");
+        return View();
+    } 
 
-    [HttpPost]
-    public async Task<IActionResult> Login(string loginname, string password)
+    [HttpGet]
+    public async Task<IActionResult> Logout()
     {
-        if (string.IsNullOrWhiteSpace(loginname) || string.IsNullOrWhiteSpace(password))
-        {
-            ModelState.AddModelError("", "Username and password are required.");
-            return RedirectToAction("Error", "Home");
-            // return NotFound();
-        }
-        var user = _db.Users.FirstOrDefault(u => (u.Username == loginname) || (u.Email == loginname));
-        if (user != null)
-        {
-            // System.Console.WriteLine("UNAME " + loginname + " PSW " + password + " HAsh ");
-            var result = BCrypt.Net.BCrypt.Verify(password, user.Password);
-            // System.Console.WriteLine(result);
-            return Ok(user);
-
-        } else
-        {
-            ModelState.AddModelError("", "Can't find user");
-            return RedirectToAction("Error", "Home");
-        }
+        await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        return RedirectToAction("Login");
     }
-    
+    // return Unauthorized(new { message = "Invalid username or password" });
+    // return NotFound(new { message = "User not found" });
+
     [HttpPost]
+    [AllowAnonymous]
+    public async Task<IActionResult> Login([FromBody] LoginDTO dto)
+    {
+        var user = _db.Users.FirstOrDefault(u => u.Username == dto.Loginname || u.Email == dto.Loginname);
+        if (user == null) return Unauthorized(new { message = "Invalid username or password" });
+
+        if (!BCrypt.Net.BCrypt.Verify(dto.Password, user.Password))
+            return Unauthorized(new { message = "Invalid username or password" });
+
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new(ClaimTypes.Name, user.Username),
+        };
+
+        var identity = new ClaimsIdentity(claims, "Login");
+        var principal = new ClaimsPrincipal(identity);
+
+        await HttpContext.SignInAsync(principal);
+        await HttpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            principal
+            // authProperties
+            );
+        return Ok(new { message = "Login success" });
+        // return RedirectToAction("Index","Home");
+    }
+
+    [HttpPost]
+    [AllowAnonymous]
     public async Task<IActionResult> Register(string fullname, string email, string address, string sdt, string uname, string password, IFormFile avt)
     {
         var avtUrl = "https://dummyimage.com/150x150/ced4da/ffffff.png&text=Avatar";
@@ -67,9 +102,9 @@ public class AuthController : Controller
                 Transformation = new Transformation().Width(150).Crop("limit")
             };
 
-            var uploadResult = await cloudinary.UploadAsync(uploadParams);
-            System.Console.WriteLine(uploadResult);
-            System.Console.WriteLine(uploadResult.Url);
+            var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+            // Console.WriteLine(uploadResult);
+            // Console.WriteLine(uploadResult.Url);
             avtUrl = uploadResult.Url.ToString();
             if (uploadResult.Error != null)
             {
@@ -77,13 +112,13 @@ public class AuthController : Controller
             }
 
         }
-        string passwordHash = BCrypt.Net.BCrypt.HashPassword(password, workFactor: 12);
+        string passwordHash = BCrypt.Net.BCrypt.HashPassword(password);
         var user = new User()
         {
-            FullName = fullname,
+            FullName = fullname ?? "No full name",
             Username = uname,
             Email = email,
-            Address = address,
+            Address = address ?? "No address",
             Role = "Role",
             Avatar = avtUrl,
             Password = passwordHash,
@@ -95,4 +130,5 @@ public class AuthController : Controller
 
         return RedirectToAction("Login");
     }
+
 }
