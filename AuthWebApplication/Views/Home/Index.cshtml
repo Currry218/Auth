@@ -1,8 +1,7 @@
 ﻿@model AuthWebApplication.Models.User
 @{
-  ViewData["Title"] = "Home Page";
+  ViewData["Title"] = "Profile";
 }
-
 <h1>PROFILE </h1>
 <section style="background-color: #eee;">
   <div class="container py-5">
@@ -10,10 +9,9 @@
       <div class="col-lg-4">
         <div class="card mb-4">
           <div class="card-body text-center">
-            <img src="@(Model.Avatar != null ? Model.Avatar : "/img/user.png")" alt="avatar"
+            <img src="@(Model.Avatar != null ? Model.Avatar : " /img/user.png")" alt="avatar"
               class="rounded-circle img-fluid" style="width: 150px;">
-
-            <h5 class="my-3">@Model.Username</h5>
+            <h4 class="my-3">@Model.Username</h4>
             <div class="d-flex justify-content-center mb-2">
             </div>
           </div>
@@ -25,76 +23,144 @@
           <div class="card-body">
             <div class="row">
               <div class="col-sm-3">
-                <p class="mb-0">Họ tên</p>
+                Họ tên
               </div>
-              <div class="col-sm-9">
-                <p class="text-muted mb-0">@Model.FullName</p>
-              </div>
-            </div>
-            <hr>
-            <div class="row">
-              <div class="col-sm-3">
-                <p class="mb-0">Email</p>
-              </div>
-              <div class="col-sm-9">
-                <p class="text-muted mb-0">@Model.Email</p>
+              <div class="col-sm-9 text-muted">
+                @Model.FullName
               </div>
             </div>
             <hr>
             <div class="row">
               <div class="col-sm-3">
-                <p class="mb-0">Số điện thoại</p>
+                Email
               </div>
-              <div class="col-sm-9">
-                <p class="text-muted mb-0">@Model.PhoneNumber</p>
-              </div>
-            </div>
-            <hr>
-            <div class="row">
-              <div class="col-sm-3">
-                <p class="mb-0">Địa chỉ</p>
-              </div>
-              <div class="col-sm-9">
-                <p class="text-muted mb-0">@Model.Address</p>
+              <div class="col-sm-9 text-muted">
+                @Model.Email
               </div>
             </div>
             <hr>
             <div class="row">
               <div class="col-sm-3">
-                <p class="mb-0">Phòng ban</p>
+                Số điện thoại
               </div>
-              <div class="col-sm-9">
-                <p class="text-muted mb-0">@Model.Role</p>
+              <div class="col-sm-9 text-muted">
+                @Model.PhoneNumber
+              </div>
+            </div>
+            <hr>
+            <div class="row">
+              <div class="col-sm-3">
+                Địa chỉ
+              </div>
+              <div class="col-sm-9 text-muted">
+                @Model.Address
+              </div>
+            </div>
+            <hr>
+            <div class="row">
+              <div class="col-sm-3">
+                Phòng ban
+              </div>
+              <div class="col-sm-9 text-muted">
+                @Model.Role
               </div>
             </div>
           </div>
         </div>
 
-        @* TODO MAKE A CHANGE PASSWORD CARD *@
-        <div class="card mb-4">
-          <div class="card-title">Đổi mật khẩu</div>
+        <div class="card p-3">
+          <div class="card-title ">Đổi mật khẩu</div>
           <div class="card-body">
-            <form>
+            <form method="POST" action="Auth/ChangePassword" id="change-password">
+
               <div class="mb-3">
-                <label for="" class="form-label">Mật khẩu cũ</label>
-                <input type="password" class="form-control" name="" id="" placeholder="" />
+                <label for class="form-label">Mật khẩu cũ</label>
+                <div class="input-group mb-3">
+                  <input type="password" id="oldPassword" name="oldPassword" class="form-control" required>
+                  <button class="btn btn-outline-secondary bi bi-eye-slash togglePassword" type="button">
+                  </button>
+                </div>
+
               </div>
               <div class="mb-3">
-                <label for="" class="form-label">Mật khẩu mới</label>
-                <input type="password" class="form-control" name="" id="" placeholder="" />
+                <label for class="form-label">Mật khẩu mới</label>
+                <div class="input-group mb-3">
+                  <input type="password" id="newPassword" name="newPassword" class="form-control" required>
+                  <button class="btn btn-outline-secondary bi bi-eye-slash togglePassword" type="button">
+                  </button>
+                </div>
               </div>
-              <div class="d-grid gap-2">
+              <div class="mb-3">
+                <label for class="form-label">Nhập lại mật khẩu mới</label>
+                <div class="input-group mb-3">
+                  <input type="password" id="confirmNewPassword" name="confirmNewPassword" class="form-control"
+                    required>
+                  <button class="btn btn-outline-secondary bi bi-eye-slash togglePassword" type="button">
+                  </button>
+                </div>
+              </div>
+              <div class="d-grid gap-2 pt-2">
                 <button type="Submit" name="" id="" class="btn btn-dark">
                   Đổi mật khẩu
                 </button>
               </div>
-
             </form>
           </div>
-
         </div>
 
       </div>
     </div>
   </div>
 </section>
+
+<script>
+  const togglePasswords = document.querySelectorAll('.togglePassword');
+
+  togglePasswords.forEach(togglePassword =>
+    togglePassword.addEventListener('click', () => {
+      // Find the input inside the same input-group
+      const input = togglePassword.closest('.input-group').querySelector('input');
+
+      const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+      input.setAttribute('type', type);
+
+      togglePassword.classList.toggle('bi-eye');
+      togglePassword.classList.toggle('bi-eye-slash');
+    })
+  );
+
+  document.getElementById("change-password").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var form = document.getElementById('change-password');
+    var data = new FormData(form);
+    var oldPassword = data.get("oldPassword").trim();
+    var newPassword = data.get("newPassword").trim();
+    var confirmNewPassword = data.get("confirmNewPassword").trim();
+    if (newPassword == oldPassword) {
+      alert("WRONG");
+    }
+
+    if (newPassword != confirmNewPassword) {
+      alert("WRONG AGAIN");
+    }
+    for (var [key, value] of data) {
+      console.log(key, value)
+    }
+    @* TODO AUTH HERE *@
+    fetch('/Auth/ChangePassword', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ 
+        oldPassword: oldPassword, newPassword: newPassword
+      })
+    })
+      .then(response => response)
+      .then(data => {
+        console.log(data);
+        // document.getElementById("result").innerText = data.message;
+      })
+      .catch(err => console.error(err));
+  });
+</script>
