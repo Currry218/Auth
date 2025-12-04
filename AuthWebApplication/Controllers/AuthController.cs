@@ -164,21 +164,111 @@ public class AuthController : Controller
         return Ok(new { message = "Register success" });
     }
 
-        {
-            FullName = fullname ?? "No full name",
-            Username = uname,
-            Email = email,
-            Address = address ?? "No address",
-            Role = "Role",
-            Avatar = avtUrl,
-            Password = passwordHash,
+    [HttpPost]
+    public IActionResult ForgotPassword([FromForm] string account)
+    {
+        _logger.LogInformation("Password reset requested for {Acc}", account);
 
-        };
-        // Added successfully
-        _db.Add(user);
+        var user = _db.Users.FirstOrDefault(u =>
+            u.Username == account || u.Email == account);
+
+        if (user == null)
+        {
+            _logger.LogWarning("Password reset failed: user not found");
+            return NotFound();
+        }
+
+        string plainOtp = new Random().Next(100000, 999999).ToString();
+
+        string hashOtp = BCrypt.Net.BCrypt.HashPassword(plainOtp);
+        user.ResetToken = hashOtp;
+        user.Expire = DateTime.UtcNow.AddMinutes(15);
         _db.SaveChanges();
 
-        return RedirectToAction("Login");
+        _logger.LogInformation("OTP generated for {User}", user.Email);
+        _logger.LogInformation("OTP generated for {User}", plainOtp);
+
+        // Email sending
+        var gmail = Environment.GetEnvironmentVariable("GMAIL");
+        var psw = Environment.GetEnvironmentVariable("GMAIL_PSW");
+
+        var msg = new MimeMessage();
+        msg.From.Add(new MailboxAddress("Auth System", gmail));
+        msg.To.Add(MailboxAddress.Parse(user.Email));
+        msg.Subject = "Password Reset";
+        msg.Body = new TextPart("html")
+        {
+            Text = $"<p>Hi,</p><p>We received a request to reset your password.</p><p>Your OTP code is:</p><h2 style='letter-spacing: 4px;'>{plainOtp}</h2><p>This code will expire in 5 minutes.</p><p>If you didn't request a password reset, please ignore this email.</p><br><p>Thanks,<br>Your App Team</p>"
+        };
+
+        using var smtp = new SmtpClient();
+        smtp.Connect("smtp.gmail.com", 465, true);
+        smtp.Authenticate(gmail, psw);
+        // smtp.Send(msg);
+        smtp.Disconnect(true);
+
+        _logger.LogInformation("OTP email sent to {Email}", user.Email);
+
+        return Ok(new { message = "OTP sent" });
     }
 
+    [HttpPost]
+    public IActionResult VerifyOTP([FromForm] string account, [FromForm] string OTP)
+    {
+        _logger.LogInformation("Verify OTP for {Acc}", account);
+
+        var user = _db.Users.FirstOrDefault(u =>
+            u.Username == account || u.Email == account);
+
+        if (user == null) return NotFound();
+
+        if (user.Expire < DateTime.UtcNow)
+        {
+            _logger.LogWarning("OTP expired for {Acc}", account);
+            return BadRequest("OTP expired");
+        }
+
+        if (!BCrypt.Net.BCrypt.Verify(OTP, user.ResetToken))
+        {
+            _logger.LogWarning("OTP invalid for {Acc}", account);
+            return BadRequest("Invalid OTP");
+        }
+
+        user.ResetToken = null;
+        user.Expire = null;
+        _db.SaveChanges();
+
+        _logger.LogInformation("OTP verified for {Acc}", account);
+        TempData["username"] = user.Username;
+        return RedirectToAction("ResetPassword");
+
+        // return Ok(new { message = "OTP verified" });
+    }
+
+    [HttpPost]
+    public IActionResult ResetPassword([FromForm] string username, [FromForm] string newPassword)
+    {
+        _logger.LogInformation("ResetPassword called for {User}", username);
+        
+        if (string.IsNullOrWhiteSpace(newPassword))
+        {
+            _logger.LogWarning("Reset password failed: empty password");
+            return BadRequest("Password required");
+        }
+
+        var user = _db.Users.FirstOrDefault(u => u.Username == username);
+        if (user == null)
+        {
+            _logger.LogWarning("Reset password failed: user not found");
+            return NotFound("User not found");
+        }
+
+        user.Password = BCrypt.Net.BCrypt.HashPassword(newPassword);
+        _db.SaveChanges();
+
+        _logger.LogInformation("Password reset successfully for {User}", username);
+
+        return Ok(new { message = "Reset successful" });
+    }
 }
+

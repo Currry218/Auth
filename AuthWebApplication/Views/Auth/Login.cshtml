@@ -54,46 +54,52 @@
   </div>
 </div>
 
+<!-- Forgot Password Modal -->
+<div class="modal fade" id="forgotModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content">
 
-<!-- Modal Body -->
-<!-- if you want to close by clicking outside the modal, delete the last endpoint:data-bs-backdrop and data-bs-keyboard -->
-<div class="modal fade" id="modalId" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog"
-  aria-labelledby="modalTitleId" aria-hidden="true">
-  <form action="/Auth/ForgotPassword" method="POST">
-    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-sm" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          @* <h5 class="modal-title" id="modalTitleId">
-          Modal title
-        </h5> *@
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      <form action="/Auth/ForgotPassword" method="POST" id="send-mail-form">
+
+        <div class="modal-header border-0">
+          <h5 class="modal-title fw-semibold">Quên mật khẩu</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
+
         <div class="modal-body">
-
-          <label for="loginname" class="form-label fw-semibold">Nhập username hoặc Email</label>
-          <input type="text" id="account" name="account" class="form-control" placeholder="Username hoặc Email"
-            required>
-
+          <label class="form-label fw-semibold">Nhập Username hoặc Email</label>
+          <input type="text" name="account" class="form-control" placeholder="Username hoặc Email" required>
         </div>
-        <div class="modal-footer">
-          @* <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-            Close
-          </button> *@
-          <button type="submit" class="btn btn-dark">Gửi</button>
+
+        <div class="modal-footer border-0">
+          <button type="submit" class="btn btn-dark w-100" id="send-mail-button">Gửi OTP</button>
         </div>
-  </form>
+
+      </form>
+      
+      <form action="/Auth/VerifyOTP" method="POST" id="otp-form" style="display:none;">
+
+        <div class="modal-header border-0">
+          <h5 class="modal-title fw-semibold">Nhập OTP</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <label class="form-label fw-semibold">OTP đã được gửi về mail của bạn</label>
+          <input type="number" name="OTP" class="form-control" placeholder="" maxlength="6" required>
+          <input type="text" name="account" id="account-otp" class="form-control" placeholder="Username hoặc Email" hidden>
+        </div>
+
+        <div class="modal-footer border-0">
+          <button type="submit" class="btn btn-dark w-100">Xác nhận</button>
+        </div>
+
+      </form>
+    </div>
+  </div>
 </div>
 
-
 <script>
-  const togglePassword = document.querySelector('#togglePassword');
-  togglePassword.addEventListener('click', () => {
-    const password = document.querySelector('#password');
-    const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
-    password.setAttribute('type', type);
-
-    togglePassword.classList.toggle('bi-eye');
-    togglePassword.classList.toggle('bi-eye-slash');
   // Toggle password visibility
   const togglePassword = document.getElementById("togglePassword");
   togglePassword.addEventListener("click", () => {
@@ -136,5 +142,36 @@
         btn.disabled = false;
       });
   });
+  
+  document.getElementById("send-mail-form").addEventListener("submit", function (e) {
+    e.preventDefault();
 
+    const btn = document.getElementById("send-mail-button");
+    btn.disabled = true;
+
+    const data = new FormData(this);
+
+    // Send as multipart/form-data so model binding can read form fields
+    fetch('/Auth/ForgotPassword', {
+      method: 'POST',
+      body: data
+    })
+      .then(async response => {
+        if (!response.ok) throw new Error(await response.text());
+        const ct = response.headers.get('content-type') || '';
+        return ct.includes('application/json') ? response.json() : response.text();
+      })
+      .then(result => {
+        this.style.display = "none";
+        document.getElementById("otp-form").style.display = "block";
+        document.getElementById("account-otp").value = data.get("account");
+     })
+      .catch(err => {
+        console.error("Send OTP error:", err.message);
+      })
+      .finally(() => {
+        btn.disabled = false;
+      });
+  });
+  
 </script>

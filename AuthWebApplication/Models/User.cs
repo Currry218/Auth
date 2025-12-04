@@ -13,4 +13,6 @@ public class User
     public string? PhoneNumber { get; set; }
     public string? Role { get; set; }
     public string? Avatar { get; set; }
+    public string? ResetToken { get; set; }
+    public DateTime? Expire { get; set; }
 }
