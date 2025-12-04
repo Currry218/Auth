@@ -1,5 +1,8 @@
-﻿@model AuthWebApplication.Models.User
+﻿@using Microsoft.EntityFrameworkCore.Metadata.Internal
+@model AuthWebApplication.Models.User
 @{
+  ViewBag.Nav = "User";
+  Layout = "_Layout";
   ViewData["Title"] = "Profile";
 }
 <h1>PROFILE </h1>
@@ -146,21 +149,28 @@
     for (var [key, value] of data) {
       console.log(key, value)
     }
-    @* TODO AUTH HERE *@
-    fetch('/Auth/ChangePassword', {
+    fetch('/Home/ChangePassword', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ 
-        oldPassword: oldPassword, newPassword: newPassword
+      body: JSON.stringify({
+        oldPassword: oldPassword,
+        newPassword: newPassword
       })
     })
-      .then(response => response)
-      .then(data => {
-        console.log(data);
-        // document.getElementById("result").innerText = data.message;
+      .then(async response => {
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText || "Change password failed");
+        }
+        return response.json();
       })
-      .catch(err => console.error(err));
+      .then(result => {
+        console.log(result.message);
+      })
+      .catch(err => {
+        console.error("Change password error:", err.message);
+      });
   });
 </script>

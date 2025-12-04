@@ -3,11 +3,11 @@ using Microsoft.AspNetCore.Mvc;
 using AuthWebApplication.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
-using NuGet.Protocol;
 using System.Security.Claims;
 
 namespace AuthWebApplication.Controllers;
 
+// TODO: try to get user in whole class then use 
 public class HomeController(AuthContext db, ILogger<HomeController> logger) : Controller
 {
     private readonly ILogger<HomeController> _logger = logger;
@@ -17,9 +17,34 @@ public class HomeController(AuthContext db, ILogger<HomeController> logger) : Co
     public async Task<IActionResult> Index()
     {
         var uname = HttpContext.User.FindFirstValue(ClaimTypes.Name);
-        Console.WriteLine(uname);
         var user = await _db.Users.FirstOrDefaultAsync(x => x.Username == uname);
         return View(user);
+    }
+
+    [HttpPost]
+    [Authorize]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDTO changePasswordDTO)
+    {
+        var uname = HttpContext.User.FindFirstValue(ClaimTypes.Name);
+        
+        var user = await _db.Users.FirstOrDefaultAsync(x => x.Username == uname);
+        if(user == null)
+        {
+            _logger.LogInformation("Cant find user");
+            return NotFound(new {message = "No user"});
+        }
+
+        if(!BCrypt.Net.BCrypt.Verify(changePasswordDTO.OldPassword, user.Password))
+        {
+
+            _logger.LogInformation("Wrong password");
+            return BadRequest(new {message = "No user"});
+            
+        }
+        user.Password = BCrypt.Net.BCrypt.HashPassword(changePasswordDTO.NewPassword);
+        _db.SaveChanges();
+
+        return Ok(new {messsage = "Change password succesfully"});
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
