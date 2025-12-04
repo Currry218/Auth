@@ -1,75 +1,201 @@
 @{
-  Layout = "_GuestLayout";
+    ViewBag.Nav = "Guest";
+    Layout = "_Layout";
+    ViewData["Title"] = "Register";
 }
-<section class="vh-100 d-flex align-items-center justify-content-center bg-light">
-  <div class="card shadow-lg p-5" style="width: 700px; border-radius: 20px;">
-    <h3 class="text-center mb-4 fw-bold">Tạo tài khoản</h3>
 
-    <form method="POST" action="/auth/register" enctype="multipart/form-data">
-      <div class="row g-3">
-        <div class="col-6">
-          <label class="form-label fw-semibold">Full Name</label>
-          <input type="text" class="form-control" name="fullname" required>
-        </div>
+<section class="min-vh-100 d-flex align-items-center justify-content-center bg-light p-4">
+    <div class="card shadow p-4 rounded-3" style="max-width: 850px; width: 100%;">
 
-        <div class="col-6">
-          <label class="form-label fw-semibold">Email</label>
-          <input type="email" class="form-control" name="email" required>
-        </div>
+        <h3 class="text-center mb-4 fw-bold">Tạo tài khoản</h3>
 
-        <div class="col-6">
-          <label class="form-label fw-semibold">Address</label>
-          <input type="text" class="form-control" name="address">
-        </div>
+        <form id="register-form" method="POST" action="/Auth/Register" enctype="multipart/form-data">
+            <div class="row g-3">
 
-        <div class="col-6">
-          <label class="form-label fw-semibold">City</label>
-          <select class="form-select" name="city">
-            <option selected disabled>Select one</option>
-            <option>New Delhi</option>
-            <option>Istanbul</option>
-            <option>Jakarta</option>
-          </select>
-        </div>
+                <!-- Fullname -->
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Họ tên</label>
+                    <input type="text" class="form-control" name="fullname" value="Nguyen Van A">
+                </div>
 
-        <div class="col-6">
-          <label class="form-label fw-semibold">Phone number</label>
-          <input type="text" class="form-control" name="sdt">
-        </div>
+                <!-- Email -->
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Email</label>
+                    <input type="email" class="form-control" name="email" value="example@gmail.com" required>
+                </div>
 
-        <div class="col-6">
-          <label class="form-label fw-semibold">Username</label>
-          <input type="text" class="form-control" name="uname" required>
-        </div>
+                <!-- Role -->
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Phòng ban</label>
+                    <select class="form-select" name="role">
+                        <option selected hidden>Chọn phòng ban</option>
+                        @for (var i = 1; i <= 10; i++)
+                        {
+                            <option>Phòng ban @i</option>
+                        }
+                    </select>
+                </div>
 
-        <div class="col-6">
-          <label class="form-label fw-semibold">Avatar</label>
-          <input type="file" class="form-control" name="avt" id="avt" accept="image/*">
-        </div>
+                <!-- Phone -->
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Số điện thoại</label>
+                    <input class="form-control" name="sdt" placeholder="xxx-xxxx-xxx" data-slots="x">
+                </div>
 
-        <div class="col-6 d-flex justify-content-center align-items-center">
-          <img id="preview-avt"
-               src="https://dummyimage.com/150x150/ced4da/ffffff.png&text=Avatar"
-               class="img-fluid rounded-circle border border-3 border-primary"
-               style="width: 150px; height: 150px; object-fit: cover;">
-        </div>
-      </div>
+                <!-- Username -->
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Username</label>
+                    <input type="text" class="form-control" name="uname" value="username" required>
+                </div>
 
-      <button type="submit" class="btn btn-primary w-100 btn-lg mt-4">Đăng ký</button>
+                <!-- Address -->
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Địa chỉ</label>
+                    <div class="row g-2">
+                        <div class="col-md-6 col-lg-3">
+                            <input type="text" class="form-control" name="road" placeholder="Số nhà / Đường">
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <select class="form-select" id="tinh-select" name="province">
+                                <option value="">Tỉnh/Thành phố</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <select class="form-select" id="huyen-select" name="district">
+                                <option value="">Quận/Huyện</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 col-lg-3">
+                            <select class="form-select" id="xa-select" name="ward">
+                                <option value="">Phường/Xã</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
 
-      <p class="text-center text-muted mt-3">
-        Đã có tài khoản?
-        <a href="/auth/login" class="fw-bold text-decoration-none">Đăng nhập</a>
-      </p>
-    </form>
-  </div>
+                <!-- Avatar -->
+                <div class="col-12 d-flex flex-column align-items-center mt-3">
+                    <img id="preview-avt"
+                         src="https://dummyimage.com/150x150/ced4da/ffffff.png&text=Avatar"
+                         class="rounded-circle border border-secondary"
+                         style="width: 150px; height: 150px; object-fit: cover;" />
+
+                    <label for="avt" class="btn btn-outline-dark mt-2">
+                        Chọn ảnh
+                    </label>
+                    <input type="file" id="avt" name="avt" accept="image/*" class="d-none">
+                </div>
+            </div>
+
+            <button id="register-button" type="submit" class="btn btn-dark w-100 btn-lg mt-4">
+                Đăng ký
+            </button>
+
+            <p class="text-center text-muted mt-3">
+                Đã có tài khoản?
+                <a href="/auth/login" class="fw-bold text-decoration-none text-black">Đăng nhập</a>
+            </p>
+        </form>
+    </div>
 </section>
-<script>
-  document.getElementById("avt").addEventListener("change", function (e) {
-    const file = e.target.files[0];
-    if (!file) return;
 
-    const img = document.getElementById("preview-avt");
-    img.src = URL.createObjectURL(file);
-  });
+<!-- Avatar Preview -->
+<script>
+    document.getElementById("avt").addEventListener("change", function (e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        document.getElementById("preview-avt").src = URL.createObjectURL(file);
+    });
+</script>
+
+<!-- Address API -->
+<script>
+    async function loadTinh() {
+        const res = await fetch("https://provinces.open-api.vn/api/p/");
+        const provinces = await res.json();
+
+        const tinh = document.getElementById("tinh-select");
+        tinh.innerHTML = `<option value="">Tỉnh/Thành phố</option>`;
+
+        provinces.forEach(p => {
+            tinh.innerHTML += `<option value="${p.code},${p.name}">${p.name}</option>`;
+        });
+    }
+
+    document.getElementById("tinh-select").addEventListener("change", async function () {
+        const code = this.value.split(",")[0];
+        const huyen = document.getElementById("huyen-select");
+        const xa = document.getElementById("xa-select");
+
+        huyen.innerHTML = `<option value="">Quận/Huyện</option>`;
+        xa.innerHTML = `<option value="">Phường/Xã</option>`;
+
+        if (!code) return;
+
+        const res = await fetch(`https://provinces.open-api.vn/api/p/${code}?depth=2`);
+        const province = await res.json();
+
+        province.districts.forEach(d => {
+            huyen.innerHTML += `<option value="${d.code},${d.name}">${d.name}</option>`;
+        });
+    });
+
+    document.getElementById("huyen-select").addEventListener("change", async function () {
+        const code = this.value.split(",")[0];
+
+        const xa = document.getElementById("xa-select");
+        xa.innerHTML = `<option value="">Phường/Xã</option>`;
+
+        if (!code) return;
+
+        const res = await fetch(`https://provinces.open-api.vn/api/d/${code}?depth=2`);
+        const district = await res.json();
+
+        district.wards.forEach(w => {
+            xa.innerHTML += `<option value="${w.name}">${w.name}</option>`;
+        });
+    });
+
+    document.addEventListener("DOMContentLoaded", loadTinh);
+</script>
+
+<!-- Submit Form -->
+<script>
+    document.getElementById("register-form").addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const btn = document.getElementById("register-button");
+        btn.disabled = true;
+
+        const form = new FormData(this);
+
+        const address = form.get("road")
+            + ", " + form.get("province").split(",")[1]
+            + ", " + form.get("district").split(",")[1]
+            + ", " + form.get("ward");
+
+        const send = new FormData();
+        send.append("username", form.get("uname"));
+        send.append("email", form.get("email"));
+        send.append("password", form.get("password"));
+        send.append("fullname", form.get("fullname"));
+        send.append("address", address);
+        send.append("phonenumber", form.get("sdt"));
+        send.append("role", form.get("role"));
+        send.append("avatar", form.get("avt"));
+
+        try {
+            const res = await fetch("/Auth/Register", { method: "POST", body: send });
+
+            if (!res.ok) throw new Error(await res.text());
+
+            const result = await res.json();
+            console.log(result);
+
+        } catch (err) {
+            console.error("Register failed:", err.message);
+        } finally {
+            btn.disabled = false;
+        }
+    });
 </script>

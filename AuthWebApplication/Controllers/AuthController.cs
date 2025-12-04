@@ -8,20 +8,16 @@ using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 
 using MailKit.Net.Smtp;
-using MailKit;
 using MimeKit;
 
 using AuthWebApplication.Models;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.Cookies;
-// using AuthWebApplication.Data;
-// [Route("api/auth")]
-// [ApiController]
+
 public class AuthController : Controller
 {
     private readonly AuthContext _db;
     private readonly ILogger<AuthController> _logger;
-    private Cloudinary _cloudinary;
+    private readonly Cloudinary _cloudinary;
 
     public AuthController(AuthContext db, ILogger<AuthController> logger)
     {
@@ -29,91 +25,145 @@ public class AuthController : Controller
         _logger = logger;
 
         DotEnv.Load(options: new DotEnvOptions(probeForEnv: true));
-        _cloudinary = new Cloudinary(Environment.GetEnvironmentVariable("CLOUDINARY_URL"));
+
+        var cloudUrl = Environment.GetEnvironmentVariable("CLOUDINARY_URL");
+        _cloudinary = new Cloudinary(cloudUrl);
         _cloudinary.Api.Secure = true;
     }
 
     [HttpGet]
     public IActionResult Login()
     {
-        var u = HttpContext.User.FindFirstValue(ClaimTypes.Name);
-        if(u != null) return RedirectToAction("Index","Home");
+        var username = HttpContext.User.FindFirstValue(ClaimTypes.Name);
+        if (username != null)
+        {
+            _logger.LogInformation("User {User} already logged in", username);
+            return RedirectToAction("Index", "Home");
+        }
+
         return View();
-    } 
+    }
 
     [HttpGet]
     public IActionResult Index() => RedirectToAction("Login");
 
     [HttpGet]
-    public IActionResult Register() {
-        var u = HttpContext.User.FindFirstValue(ClaimTypes.Name);
-        if(u != null) return RedirectToAction("Index","Home");
+    public IActionResult ResetPassword() {
+        ViewBag.User = TempData["username"];
         return View();
     } 
+
+    [HttpGet]
+    public IActionResult Register()
+    {
+        var u = HttpContext.User.FindFirstValue(ClaimTypes.Name);
+        if (u != null) return RedirectToAction("Index", "Home");
+
+        return View();
+    }
 
     [HttpGet]
     public async Task<IActionResult> Logout()
     {
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        _logger.LogInformation("User logged out successfully");
         return RedirectToAction("Login");
     }
-    // return Unauthorized(new { message = "Invalid username or password" });
-    // return NotFound(new { message = "User not found" });
 
     [HttpPost]
-    [AllowAnonymous]
     public async Task<IActionResult> Login([FromBody] LoginDTO dto)
     {
-        var user = _db.Users.FirstOrDefault(u => u.Username == dto.Loginname || u.Email == dto.Loginname);
-        if (user == null) return Unauthorized(new { message = "Invalid username or password" });
+        _logger.LogInformation("Login attempt for account {Acc}", dto.Loginname);
+
+        var user = _db.Users.FirstOrDefault(u =>
+            u.Username == dto.Loginname || u.Email == dto.Loginname);
+
+        if (user == null)
+        {
+            _logger.LogWarning("Login failed: account not found");
+            return Unauthorized(new { message = "Invalid username or password" });
+        }
 
         if (!BCrypt.Net.BCrypt.Verify(dto.Password, user.Password))
-            return Unauthorized(new { message = "Invalid username or password" });
-
-        var claims = new List<Claim>
         {
-            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new(ClaimTypes.Name, user.Username),
+            _logger.LogWarning("Login failed: wrong password for {Acc}", dto.Loginname);
+            return Unauthorized(new { message = "Invalid username or password" });
+        }
+
+        var claims = new List<Claim> {
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Name, user.Username),
         };
 
-        var identity = new ClaimsIdentity(claims, "Login");
+        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         var principal = new ClaimsPrincipal(identity);
 
         await HttpContext.SignInAsync(principal);
-        await HttpContext.SignInAsync(
-            CookieAuthenticationDefaults.AuthenticationScheme,
-            principal
-            // authProperties
-            );
+
+        _logger.LogInformation("User {User} logged in successfully", user.Username);
+
         return Ok(new { message = "Login success" });
-        // return RedirectToAction("Index","Home");
     }
 
+
     [HttpPost]
-    [AllowAnonymous]
-    public async Task<IActionResult> Register(string fullname, string email, string address, string sdt, string uname, string password, IFormFile avt)
+    public async Task<IActionResult> Register([FromForm] RegisterDTO dto)
     {
-        var avtUrl = "https://dummyimage.com/150x150/ced4da/ffffff.png&text=Avatar";
-        if (avt != null)
+        if (!ModelState.IsValid)
         {
-            var uploadParams = new ImageUploadParams()
+            _logger.LogWarning("Register failed: invalid model");
+            return BadRequest("Invalid register data");
+        }
+
+        _logger.LogInformation("Register request for email {Email}", dto.Email);
+
+        string avatarUrl = "https://dummyimage.com/150x150/ced4da/ffffff.png&text=Avatar";
+
+        // Upload avatar if exists
+        if (dto.Avatar != null)
+        {
+            _logger.LogInformation("Uploading avatar {Name}", dto.Avatar.FileName);
+
+            var uploadParams = new ImageUploadParams
             {
-                File = new FileDescription(avt.FileName, avt.OpenReadStream()),
-                Transformation = new Transformation().Width(150).Crop("limit")
+                File = new FileDescription(dto.Avatar.FileName, dto.Avatar.OpenReadStream()),
+                // Transformation = new Transformation().Width(150).Height(150).Crop("fill")
             };
 
             var uploadResult = await _cloudinary.UploadAsync(uploadParams);
-            // Console.WriteLine(uploadResult);
-            // Console.WriteLine(uploadResult.Url);
-            avtUrl = uploadResult.Url.ToString();
+
             if (uploadResult.Error != null)
             {
+                _logger.LogError("Avatar upload failed: {Err}", uploadResult.Error.Message);
                 return StatusCode(500, uploadResult.Error.Message);
             }
 
+            avatarUrl = uploadResult.Url.ToString();
+            _logger.LogInformation("Avatar uploaded successfully: {Url}", avatarUrl);
         }
-        string passwordHash = BCrypt.Net.BCrypt.HashPassword(password);
-        var user = new User()
+
+        var hashed = BCrypt.Net.BCrypt.HashPassword(dto.Password);
+
+        var user = new User
+        {
+            FullName = dto.FullName,
+            Username = dto.Username,
+            Password = hashed,
+            Email = dto.Email,
+            Role = dto.Role ?? "User",
+            Address = dto.Address,
+            PhoneNumber = dto.PhoneNumber,
+            Avatar = avatarUrl,
+        };
+
+        _db.Users.Add(user);
+        _db.SaveChanges();
+
+        _logger.LogInformation("New user registered: {Email}", dto.Email);
+
+        return Ok(new { message = "Register success" });
+    }
+
         {
             FullName = fullname ?? "No full name",
             Username = uname,
