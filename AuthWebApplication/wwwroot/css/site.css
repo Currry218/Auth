@@ -29,3 +29,24 @@ body {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
 }
+/* TODO make it look like 1 */
+.togglePassword {
+  background-color: transparent;
+  border: 1px solid #dee2e6;
+  border-left: none;
+}
+.togglePassword:hover {
+  background-color: transparent;
+  color: black;
+  
+}
+.togglePassword:focus, .togglePassword.btn:active:focus {
+  /* outline: none !important; */
+  box-shadow: none;
+  background-color: transparent;
+  color: black;
+}
+.form-control {
+  outline: none !important;
+  border-right: none !important;
+}
