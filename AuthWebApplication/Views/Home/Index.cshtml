@@ -139,12 +139,19 @@
     var oldPassword = data.get("oldPassword").trim();
     var newPassword = data.get("newPassword").trim();
     var confirmNewPassword = data.get("confirmNewPassword").trim();
+
     if (newPassword == oldPassword) {
-      alert("WRONG");
+      toast({
+        message: "Mật khẩu mới không thể giống mật khẩu cũ",
+        type: "warning",
+      });
     }
 
     if (newPassword != confirmNewPassword) {
-      alert("WRONG AGAIN");
+      toast({
+        message: "Nhập lại mật khẩu mới",
+        type: "warning",
+      });
     }
     for (var [key, value] of data) {
       console.log(key, value)
@@ -161,16 +168,23 @@
     })
       .then(async response => {
         if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(errorText || "Change password failed");
+          const err = await response.text();
+          throw new Error(err.message || "Thay đổi mật khẩu không thành công");
         }
         return response.json();
       })
       .then(result => {
-        console.log(result.message);
+        toast({
+          message: result.message,
+          type: "success",
+        });
       })
       .catch(err => {
-        console.error("Change password error:", err.message);
+        toast({
+          message: err.message,
+          type: "error",
+        });
       });
+
   });
 </script>

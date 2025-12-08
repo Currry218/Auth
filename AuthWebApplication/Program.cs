@@ -1,12 +1,16 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-
 using Microsoft.AspNetCore.Authentication.Cookies;
+using dotenv.net;
 
 // using User.Data;
 var builder = WebApplication.CreateBuilder(args);
+
 // Add services to the container.
-builder.Services.AddDbContext<AuthContext>();
+// builder.Services.AddDbContext<AuthContext>();
+// builder.Services.AddDbContext<AuthContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDbContext<AuthContext>(options => options.UseNpgsql(Environment.GetEnvironmentVariable("DB_CONNECTION_STRING")));
+
+
 // add cookie authentication
 builder.Services.AddDistributedMemoryCache(); // required for session
 builder.Services.AddSession(options =>

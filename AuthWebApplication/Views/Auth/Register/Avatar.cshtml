@@ -1,0 +1,40 @@
+<div class="card shadow p-4 rounded-3 m-5 p-5">
+    <!-- Avatar -->
+    <div class="d-flex flex-column align-items-center mt-3">
+        @* <img id="preview-avt" src="https://dummyimage.com/150x150/ced4da/ffffff.png&text=Avatar"
+            class="rounded-circle border border-black" style="width: 150px; height: 150px; object-fit: cover;" /> *@
+        <div id="croppie"></div>
+
+        <label for="avt" class="btn btn-outline-dark mt-3 text-nowrap">
+            Chọn ảnh
+        </label>
+        <input type="file" id="avt" name="avt" accept="image/*" class="d-none">
+    </div>
+</div>
+
+
+
+<!-- Avatar Preview -->
+<script>
+    var otps = {
+        enableExif: true,
+        viewport: {
+            width: 150,
+            height: 150,
+            type: 'circle'
+        },
+        boundary: {
+            width: 200,
+            height: 200
+        }
+    };
+    var croppie = new Croppie(document.getElementById('croppie'), otps);
+    croppie.bind({ url: "https://dummyimage.com/150x150/ced4da/ffffff.png&text=Avatar" });
+
+    document.getElementById("avt").addEventListener("change", function (e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        document.getElementById("preview-avt").src = URL.createObjectURL(file);
+        croppie.bind({ url: URL.createObjectURL(file) });        
+    });
+</script>

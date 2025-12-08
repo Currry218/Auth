@@ -1,0 +1,85 @@
+<!-- Forgot Password Modal -->
+<div class="modal fade" id="forgotModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content">
+
+      <form action="/Auth/ForgotPassword" method="POST" id="send-mail-form">
+
+        <div class="modal-header border-0">
+          <h5 class="modal-title fw-semibold">Quên mật khẩu</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <label class="form-label fw-semibold">Nhập Username hoặc Email</label>
+          <input type="text" name="account" class="form-control" placeholder="Username hoặc Email" required>
+        </div>
+
+        <div class="modal-footer border-0">
+          <button type="submit" class="btn btn-dark w-100" id="send-mail-button">Gửi OTP</button>
+        </div>
+
+      </form>
+
+      <form action="/Auth/VerifyOTP" method="POST" id="otp-form" style="display:none;">
+
+        <div class="modal-header border-0">
+          <h5 class="modal-title fw-semibold">Nhập OTP</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <label class="form-label fw-semibold">OTP đã được gửi về mail của bạn</label>
+          <input type="number" name="OTP" class="form-control" placeholder="" maxlength="6" required>
+          <input type="text" name="account" id="account-otp" class="form-control" placeholder="Username hoặc Email"
+            hidden>
+        </div>
+
+        <div class="modal-footer border-0">
+          <button type="submit" class="btn btn-dark w-100">Xác nhận</button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById("send-mail-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const btn = document.getElementById("send-mail-button");
+    btn.disabled = true;
+
+    const data = new FormData(this);
+
+    // Send as multipart/form-data so model binding can read form fields
+    fetch('/Auth/ForgotPassword', {
+      method: 'POST',
+      body: data
+    })
+      .then(async response => {
+
+        if (!response.ok) {
+          const err = await response.text();
+          throw new Error(err.message || "Reset password failed");
+        }
+        const ct = response.headers.get('content-type') || '';
+        return ct.includes('application/json') ? response.json() : response.text();
+      })
+      .then(result => {
+        this.style.display = "none";
+        document.getElementById("otp-form").style.display = "block";
+        document.getElementById("account-otp").value = data.get("account");
+      })
+      .catch(err => {
+        toast({
+          message: err.message,
+          type: "error",
+        });
+      })
+      .finally(() => {
+        btn.disabled = false;
+      });
+  });
+</script>

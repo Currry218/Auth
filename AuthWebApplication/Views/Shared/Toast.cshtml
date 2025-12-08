@@ -1,0 +1,74 @@
+<div id="toast"></div>
+
+<script>
+    function toast({ title = "", message = "", type = "info", duration = 3000 }) {
+        const main = document.getElementById("toast");
+        
+        if (main) {
+            const toast = document.createElement("div");
+
+            // Auto remove toast
+            const autoRemoveId = setTimeout(function () {
+                main.removeChild(toast);
+            }, duration + 1000);
+
+            // Remove toast when clicked
+            toast.onclick = function (e) {
+                if (e.target.closest(".toast__close")) {
+                    main.removeChild(toast);
+                    clearTimeout(autoRemoveId);
+                }
+            };
+
+            const icons = {
+                success: "bi bi-check-circle",
+                info: "bi bi-info-circle",
+                warning: "bi bi-exclamation-circle",
+                error: "bi bi-exclamation-circle"
+            };
+            const titles = {
+                success: "Success!",
+                info: "Info",
+                warning: "Warning!",
+                error: "Error!"
+            };
+            const icon = icons[type];
+            const delay = (duration / 1000).toFixed(2);
+
+            toast.classList.add("toast", `toast--${type}`);
+            toast.classList.add('show');
+            toast.style.animation = `slideInLeft ease .3s, fadeOut linear 1s ${delay}s forwards`;
+
+            toast.innerHTML = `
+                    <div class="toast__icon">
+                        <i class="${icon}"></i>
+                    </div>
+                    <div class="toast__body">
+                        <h3 class="toast__title">${title || titles[type]}</h3>
+                        <p class="toast__msg">${message}</p>
+                    </div>
+                    <div class="toast__close">
+                        <i class="bi bi-x"></i>
+                    </div>
+                `;
+            main.appendChild(toast);
+        }
+    }
+
+    function showToast(type) {
+        const messages = {
+            success: { title: "Success!", message: "Operation completed successfully!" },
+            info: { title: "Info", message: "This is an informational message." },
+            warning: { title: "Warning", message: "Please be careful with this action." },
+            error: { title: "Error", message: "Something went wrong. Please try again." }
+        };
+
+        const msg = messages[type] || messages.info;
+        toast({
+            title: msg.title,
+            message: msg.message,
+            type: type,
+            duration: 3000
+        });
+    }
+</script>

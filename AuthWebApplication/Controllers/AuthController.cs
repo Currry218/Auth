@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authentication;
 using System.Security.Claims;
@@ -41,7 +40,7 @@ public class AuthController : Controller
             return RedirectToAction("Index", "Home");
         }
 
-        return View();
+        return View("Login/Index");
     }
 
     [HttpGet]
@@ -56,10 +55,14 @@ public class AuthController : Controller
     [HttpGet]
     public IActionResult Register()
     {
-        var u = HttpContext.User.FindFirstValue(ClaimTypes.Name);
-        if (u != null) return RedirectToAction("Index", "Home");
+        var username = HttpContext.User.FindFirstValue(ClaimTypes.Name);
+        if (username != null)
+        {
+            _logger.LogInformation("User {User} already logged in", username);
+            return RedirectToAction("Index", "Home");
+        }
 
-        return View();
+        return View("Register/Index");
     }
 
     [HttpGet]
@@ -77,22 +80,22 @@ public class AuthController : Controller
 
         var user = _db.Users.FirstOrDefault(u =>
             u.Username == dto.Loginname || u.Email == dto.Loginname);
-
+            
         if (user == null)
         {
             _logger.LogWarning("Login failed: account not found");
             return Unauthorized(new { message = "Invalid username or password" });
         }
 
-        if (!BCrypt.Net.BCrypt.Verify(dto.Password, user.Password))
+        if (!BCrypt.Net.BCrypt.Verify(user.Username + dto.Password, user.Password))
         {
             _logger.LogWarning("Login failed: wrong password for {Acc}", dto.Loginname);
             return Unauthorized(new { message = "Invalid username or password" });
         }
 
         var claims = new List<Claim> {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Name, user.Username),
+            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new(ClaimTypes.Name, user.Username),
         };
 
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
@@ -142,7 +145,7 @@ public class AuthController : Controller
             _logger.LogInformation("Avatar uploaded successfully: {Url}", avatarUrl);
         }
 
-        var hashed = BCrypt.Net.BCrypt.HashPassword(dto.Password);
+        var hashed = BCrypt.Net.BCrypt.HashPassword(dto.Username + dto.Password);
 
         var user = new User
         {
@@ -150,7 +153,7 @@ public class AuthController : Controller
             Username = dto.Username,
             Password = hashed,
             Email = dto.Email,
-            Role = dto.Role ?? "User",
+            Role = dto.Role ?? "Phòng ban 1",
             Address = dto.Address,
             PhoneNumber = dto.PhoneNumber,
             Avatar = avatarUrl,
@@ -158,9 +161,9 @@ public class AuthController : Controller
 
         _db.Users.Add(user);
         _db.SaveChanges();
-
         _logger.LogInformation("New user registered: {Email}", dto.Email);
-
+        
+        TempData["successmsg"] = "register successfully, you may login";
         return Ok(new { message = "Register success" });
     }
 
@@ -204,7 +207,7 @@ public class AuthController : Controller
         using var smtp = new SmtpClient();
         smtp.Connect("smtp.gmail.com", 465, true);
         smtp.Authenticate(gmail, psw);
-        // smtp.Send(msg);
+        smtp.Send(msg);
         smtp.Disconnect(true);
 
         _logger.LogInformation("OTP email sent to {Email}", user.Email);
@@ -239,10 +242,9 @@ public class AuthController : Controller
         _db.SaveChanges();
 
         _logger.LogInformation("OTP verified for {Acc}", account);
+
         TempData["username"] = user.Username;
         return RedirectToAction("ResetPassword");
-
-        // return Ok(new { message = "OTP verified" });
     }
 
     [HttpPost]
@@ -250,12 +252,6 @@ public class AuthController : Controller
     {
         _logger.LogInformation("ResetPassword called for {User}", username);
         
-        if (string.IsNullOrWhiteSpace(newPassword))
-        {
-            _logger.LogWarning("Reset password failed: empty password");
-            return BadRequest("Password required");
-        }
-
         var user = _db.Users.FirstOrDefault(u => u.Username == username);
         if (user == null)
         {
@@ -263,7 +259,7 @@ public class AuthController : Controller
             return NotFound("User not found");
         }
 
-        user.Password = BCrypt.Net.BCrypt.HashPassword(newPassword);
+        user.Password = BCrypt.Net.BCrypt.HashPassword(user.Username + newPassword);
         _db.SaveChanges();
 
         _logger.LogInformation("Password reset successfully for {User}", username);

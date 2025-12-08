@@ -1,0 +1,77 @@
+<!-- Address -->
+<div class="col-12">
+    <label class="form-label fw-semibold">Địa chỉ</label>
+    <div class="row g-2">
+        <div class="col-md-6 col-lg-3">
+            <input type="text" class="form-control" name="road" placeholder="Số nhà / Đường">
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <select class="form-select" id="tinh-select" name="province">
+                <option value="">Tỉnh/Thành phố</option>
+            </select>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <select class="form-select" id="huyen-select" name="district">
+                <option value="">Quận/Huyện</option>
+            </select>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <select class="form-select" id="xa-select" name="ward">
+                <option value="">Phường/Xã</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+
+<!-- Address API -->
+<script>
+    async function loadTinh() {
+        const res = await fetch("https://provinces.open-api.vn/api/p/");
+        const provinces = await res.json();
+
+        const tinh = document.getElementById("tinh-select");
+        tinh.innerHTML = `<option value="">Tỉnh/Thành phố</option>`;
+
+        provinces.forEach(p => {
+            tinh.innerHTML += `<option value="${p.code},${p.name}">${p.name}</option>`;
+        });
+    }
+
+
+    document.getElementById("tinh-select").addEventListener("change", async function () {
+        const code = this.value.split(",")[0];
+        const huyen = document.getElementById("huyen-select");
+        const xa = document.getElementById("xa-select");
+
+        huyen.innerHTML = `<option value="">Quận/Huyện</option>`;
+        xa.innerHTML = `<option value="">Phường/Xã</option>`;
+
+        if (!code) return;
+
+        const res = await fetch(`https://provinces.open-api.vn/api/p/${code}?depth=2`);
+        const province = await res.json();
+
+        province.districts.forEach(d => {
+            huyen.innerHTML += `<option value="${d.code},${d.name}">${d.name}</option>`;
+        });
+    });
+
+    document.getElementById("huyen-select").addEventListener("change", async function () {
+        const code = this.value.split(",")[0];
+
+        const xa = document.getElementById("xa-select");
+        xa.innerHTML = `<option value="">Phường/Xã</option>`;
+
+        if (!code) return;
+
+        const res = await fetch(`https://provinces.open-api.vn/api/d/${code}?depth=2`);
+        const district = await res.json();
+
+        district.wards.forEach(w => {
+            xa.innerHTML += `<option value="${w.name}">${w.name}</option>`;
+        });
+    });
+
+    document.addEventListener("DOMContentLoaded", loadTinh);
+</script>
