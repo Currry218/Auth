@@ -39,7 +39,7 @@ public class AuthController : Controller
             _logger.LogInformation("User {User} already logged in", username);
             return RedirectToAction("Index", "Home");
         }
-
+        ViewBag.Message = TempData["message"];
         return View("Login/Index");
     }
 
@@ -47,10 +47,19 @@ public class AuthController : Controller
     public IActionResult Index() => RedirectToAction("Login");
 
     [HttpGet]
-    public IActionResult ResetPassword() {
+    public IActionResult ResetPassword()
+    {
+        if (TempData["username"] == null)
+        {
+            return RedirectToAction("Login/Index"); // or return Unauthorized()
+        }
+
+        TempData.Keep("username");
+
         ViewBag.User = TempData["username"];
         return View();
-    } 
+    }
+
 
     [HttpGet]
     public IActionResult Register()
@@ -80,17 +89,17 @@ public class AuthController : Controller
 
         var user = _db.Users.FirstOrDefault(u =>
             u.Username == dto.Loginname || u.Email == dto.Loginname);
-            
+
         if (user == null)
         {
             _logger.LogWarning("Login failed: account not found");
-            return Unauthorized(new { message = "Invalid username or password" });
+            return Unauthorized(new { message = "Tên đăng nhập hoặc mật khẩu không hợp lệ" });
         }
 
         if (!BCrypt.Net.BCrypt.Verify(user.Username + dto.Password, user.Password))
         {
             _logger.LogWarning("Login failed: wrong password for {Acc}", dto.Loginname);
-            return Unauthorized(new { message = "Invalid username or password" });
+            return Unauthorized(new { message = "Tên đăng nhập hoặc mật khẩu không hợp lệ" });
         }
 
         var claims = new List<Claim> {
@@ -105,7 +114,7 @@ public class AuthController : Controller
 
         _logger.LogInformation("User {User} logged in successfully", user.Username);
 
-        return Ok(new { message = "Login success" });
+        return Ok(new { message = "Đăng nhập thành công" });
     }
 
 
@@ -115,7 +124,7 @@ public class AuthController : Controller
         if (!ModelState.IsValid)
         {
             _logger.LogWarning("Register failed: invalid model");
-            return BadRequest("Invalid register data");
+            return BadRequest(new { message = "Thông tin đăng ký không hợp lệ" });
         }
 
         _logger.LogInformation("Register request for email {Email}", dto.Email);
@@ -138,15 +147,21 @@ public class AuthController : Controller
             if (uploadResult.Error != null)
             {
                 _logger.LogError("Avatar upload failed: {Err}", uploadResult.Error.Message);
-                return StatusCode(500, uploadResult.Error.Message);
+                return StatusCode(500, "Không thể lưu avatar");
             }
 
             avatarUrl = uploadResult.Url.ToString();
             _logger.LogInformation("Avatar uploaded successfully: {Url}", avatarUrl);
         }
-
         var hashed = BCrypt.Net.BCrypt.HashPassword(dto.Username + dto.Password);
+        var _user = _db.Users.FirstOrDefault(u =>
+                    u.Username == dto.Username || u.Email == dto.Email);
 
+        if (_user != null)
+        {
+            _logger.LogWarning("Register failed: Same username or email");
+            return BadRequest(new { message = "Đã tồn tại tài khoản có cùng tên đăng nhập/email" });
+        }
         var user = new User
         {
             FullName = dto.FullName,
@@ -161,10 +176,11 @@ public class AuthController : Controller
 
         _db.Users.Add(user);
         _db.SaveChanges();
+
         _logger.LogInformation("New user registered: {Email}", dto.Email);
-        
-        TempData["successmsg"] = "register successfully, you may login";
-        return Ok(new { message = "Register success" });
+
+        TempData["message"] = "Đăng ký thành công!";
+        return Ok(new { message = "Đăng ký thành công" });
     }
 
     [HttpPost]
@@ -178,7 +194,7 @@ public class AuthController : Controller
         if (user == null)
         {
             _logger.LogWarning("Password reset failed: user not found");
-            return NotFound();
+            return NotFound(new { message = "Không tìm thấy người dùng" });
         }
 
         string plainOtp = new Random().Next(100000, 999999).ToString();
@@ -189,7 +205,6 @@ public class AuthController : Controller
         _db.SaveChanges();
 
         _logger.LogInformation("OTP generated for {User}", user.Email);
-        _logger.LogInformation("OTP generated for {User}", plainOtp);
 
         // Email sending
         var gmail = Environment.GetEnvironmentVariable("GMAIL");
@@ -212,7 +227,7 @@ public class AuthController : Controller
 
         _logger.LogInformation("OTP email sent to {Email}", user.Email);
 
-        return Ok(new { message = "OTP sent" });
+        return Ok(new { message = "Đã gửi OTP về mail của bạn" });
     }
 
     [HttpPost]
@@ -228,13 +243,13 @@ public class AuthController : Controller
         if (user.Expire < DateTime.UtcNow)
         {
             _logger.LogWarning("OTP expired for {Acc}", account);
-            return BadRequest("OTP expired");
+            return BadRequest(new { message = "OTP đã hết hạn" });
         }
 
         if (!BCrypt.Net.BCrypt.Verify(OTP, user.ResetToken))
         {
             _logger.LogWarning("OTP invalid for {Acc}", account);
-            return BadRequest("Invalid OTP");
+            return BadRequest(new { message = "OTP không hợp lệ" });
         }
 
         user.ResetToken = null;
@@ -251,20 +266,20 @@ public class AuthController : Controller
     public IActionResult ResetPassword([FromForm] string username, [FromForm] string newPassword)
     {
         _logger.LogInformation("ResetPassword called for {User}", username);
-        
+
         var user = _db.Users.FirstOrDefault(u => u.Username == username);
         if (user == null)
         {
             _logger.LogWarning("Reset password failed: user not found");
-            return NotFound("User not found");
+            return NotFound(new { message = "Không tìm thấy người dùng" });
         }
 
         user.Password = BCrypt.Net.BCrypt.HashPassword(user.Username + newPassword);
         _db.SaveChanges();
 
         _logger.LogInformation("Password reset successfully for {User}", username);
-
-        return Ok(new { message = "Reset successful" });
+        
+        return Ok(new { message = "Đổi mật khẩu thành công" });
     }
 }
 

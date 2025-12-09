@@ -2,17 +2,17 @@
 using Microsoft.EntityFrameworkCore;
 using AuthWebApplication.Models;
 
-// public class AuthContext: DbContext
-// {
-//     public DbSet<User> Users {get; set;}
-//     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-//     {
-//         optionsBuilder.UseSqlServer("Server=localhost;Database=AuthDB;Trusted_Connection=True;TrustServerCertificate=True");
-
-//     }
-// }
-public class AuthContext : DbContext
+public class AuthContext: DbContext
 {
-    public AuthContext(DbContextOptions<AuthContext> options) : base(options) { }
-    public DbSet<User> Users { get; set; }
-}   
+    public DbSet<User> Users {get; set;}
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.UseSqlServer("Server=localhost;Database=AuthDB;Trusted_Connection=True;TrustServerCertificate=True");
+
+    }
+}
+// public class AuthContext : DbContext
+// {
+//     public AuthContext(DbContextOptions<AuthContext> options) : base(options) { }
+//     public DbSet<User> Users { get; set; }
+// }   

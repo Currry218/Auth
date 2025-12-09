@@ -54,21 +54,4 @@
             main.appendChild(toast);
         }
     }
-
-    function showToast(type) {
-        const messages = {
-            success: { title: "Success!", message: "Operation completed successfully!" },
-            info: { title: "Info", message: "This is an informational message." },
-            warning: { title: "Warning", message: "Please be careful with this action." },
-            error: { title: "Error", message: "Something went wrong. Please try again." }
-        };
-
-        const msg = messages[type] || messages.info;
-        toast({
-            title: msg.title,
-            message: msg.message,
-            type: type,
-            duration: 3000
-        });
-    }
 </script>

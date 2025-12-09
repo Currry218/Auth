@@ -13,7 +13,7 @@
         <div class="card mb-4">
           <div class="card-body text-center">
             <img src="@(Model.Avatar != null ? Model.Avatar : " /img/user.png")" alt="avatar"
-              class="rounded-circle img-fluid" style="width: 150px;">
+              class="rounded-circle img-fluid border border-secondary" style="width: 150px;">
             <h4 class="my-3">@Model.Username</h4>
             <div class="d-flex justify-content-center mb-2">
             </div>
@@ -103,7 +103,7 @@
                 </div>
               </div>
               <div class="d-grid gap-2 pt-2">
-                <button type="Submit" name="" id="" class="btn btn-dark">
+                <button type="Submit" name="" id="change-password-button" class="btn btn-dark">
                   Đổi mật khẩu
                 </button>
               </div>
@@ -140,11 +140,14 @@
     var newPassword = data.get("newPassword").trim();
     var confirmNewPassword = data.get("confirmNewPassword").trim();
 
+    const btn = document.getElementById("change-password-button");
+
     if (newPassword == oldPassword) {
       toast({
         message: "Mật khẩu mới không thể giống mật khẩu cũ",
         type: "warning",
       });
+      return;
     }
 
     if (newPassword != confirmNewPassword) {
@@ -152,10 +155,15 @@
         message: "Nhập lại mật khẩu mới",
         type: "warning",
       });
+      return;
     }
     for (var [key, value] of data) {
       console.log(key, value)
     }
+
+    btn.disabled = true;
+    btn.innerHTML = "<div class='spinner-border' role='status'> </div>";
+
     fetch('/Home/ChangePassword', {
       method: 'POST',
       headers: {
@@ -168,7 +176,7 @@
     })
       .then(async response => {
         if (!response.ok) {
-          const err = await response.text();
+          const err = await response.json();
           throw new Error(err.message || "Thay đổi mật khẩu không thành công");
         }
         return response.json();
@@ -184,6 +192,11 @@
           message: err.message,
           type: "error",
         });
+      })
+      .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = null;
+        btn.innerText = "Đổi mmật khẩu";
       });
 
   });

@@ -4,7 +4,7 @@
     ViewData["Title"] = "Register";
 }
 <form id="register-form" method="POST" action="/Auth/Register" enctype="multipart/form-data">
-    <section class="min-vh-100 d-flex align-items-center justify-content-center bg-light p-4">
+    <section class="min-vh-100 d-flex align-items-center justify-content-center  p-3">
         @await Html.PartialAsync("Avatar.cshtml")
 
         <div class="card shadow p-5 rounded-3" style="max-width: 850px; width: 100%;">
@@ -13,22 +13,49 @@
 
             <div class="row g-3">
 
-                <!-- Fullname -->
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Họ tên</label>
-                    <input type="text" class="form-control" name="fullname" value="Nguyen Van A">
+                <!-- Username -->
+                <div class="col-md-6 mb-2">
+                    <label class="form-label fw-semibold">Username
+                        <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" class="form-control" name="uname" required>
                 </div>
 
                 <!-- Email -->
-                <div class="col-md-6">
+                <div class="col-md-6 mb-2">
                     <label class="form-label fw-semibold">Email
                         <span class="text-danger">*</span>
                     </label>
-                    <input type="email" class="form-control" name="email" value="example@gmail.com" required>
+                    <input type="email" class="form-control" name="email" required>
+                </div>
+
+                <!-- Password -->
+                <div class="col-md-6 mb-2">
+                    <label class="form-label fw-semibold">Mật khẩu
+                        <span class="text-danger">*</span>
+                    </label>
+
+                    <div class="input-group">
+                        <input type="password" id="password" name="password" class="form-control" required>
+                        <button class="btn btn-outline-secondary bi bi-eye-slash togglePassword" type="button"
+                            id="togglePassword"></button>
+                    </div>
+                </div>
+
+                <!-- Phone -->
+                <div class="col-md-6 mb-2">
+                    <label class="form-label fw-semibold">Số điện thoại</label>
+                    <input class="form-control" name="sdt" placeholder="xxx-xxxx-xxx" data-slots="x">
+                </div>
+
+                <!-- Fullname -->
+                <div class="col-md-6 mb-2">
+                    <label class="form-label fw-semibold">Họ tên</label>
+                    <input type="text" class="form-control" name="fullname">
                 </div>
 
                 <!-- Role -->
-                <div class="col-md-6">
+                <div class="col-md-6 mb-2">
                     <label class="form-label fw-semibold">Phòng ban</label>
                     <select class="form-select" name="role">
                         <option selected hidden>Chọn phòng ban</option>
@@ -39,32 +66,7 @@
                     </select>
                 </div>
 
-                <!-- Phone -->
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Số điện thoại</label>
-                    <input class="form-control" name="sdt" placeholder="xxx-xxxx-xxx" data-slots="x">
-                </div>
 
-                <!-- Username -->
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Username
-                        <span class="text-danger">*</span>
-                    </label>
-                    <input type="text" class="form-control" name="uname" value="username" required>
-                </div>
-
-                <!-- Password -->
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Mật khẩu
-                        <span class="text-danger">*</span>
-                    </label>
-
-                    <div class="input-group">
-                        <input value="123" type="password" id="password" name="password" class="form-control" required>
-                        <button class="btn btn-outline-secondary bi bi-eye-slash togglePassword" type="button"
-                            id="togglePassword"></button>
-                    </div>
-                </div>
                 @await Html.PartialAsync("Address.cshtml")
             </div>
 
@@ -96,6 +98,7 @@
 
         const btn = document.getElementById("register-button");
         btn.disabled = true;
+        btn.innerHTML = "<div class='spinner-border' role='status'> </div>";
 
         const form = new FormData(this);
 
@@ -110,13 +113,13 @@
             .filter(x => x && x.trim() !== "")
             .join(", ");
 
-
         const send = new FormData();
-        var avt;
-        await croppie.result("blob").then(function (blob) {
-            avt = new File([blob], form.get("uname") + "_avatar.png", { type: "image/png" });
-            @* document.getElementById("preview-avt").src = URL.createObjectURL(avt); *@
-        });
+        var avt = null;
+        var img = document.getElementsByTagName("img")[0].src;
+        if (img != "https://dummyimage.com/150x150/ced4da/ffffff.png&text=Avatar")
+            await croppie.result("blob").then(function (blob) {
+                avt = new File([blob], form.get("uname") + "_avatar.png", { type: "image/png" });
+            });
         send.append("username", form.get("uname"));
         send.append("email", form.get("email"));
         send.append("password", form.get("password"));
@@ -125,23 +128,35 @@
         send.append("phonenumber", form.get("sdt"));
         send.append("role", form.get("role"));
         send.append("avatar", avt);
-        @* send.append("avatar", form.get("avt")); *@
-        try {
-            const res = await fetch("/Auth/Register", { method: "POST", body: send });
 
-            if (!res.ok) {
-                const err = await res.text();
-                throw new Error(err.message || "Reset password failed");
-            }
-            const result = await res.json();
-            window.location.replace("/Auth/Login");
-        } catch (err) {
-             toast({
-                message: err.message,
-                type: "error",
+        fetch('/Auth/Register', {
+            method: 'POST',
+            body: send
+        })
+            .then(async response => {
+
+                if (!response.ok) {
+                    console.log(response);
+                    const err = await response.json();
+                    throw new Error(err.message);
+                }
+                return response.json();
+            })
+            .then(result => {
+                window.location.replace("/Home/Index");
+            })
+            .catch(err => {
+                console.log(err)
+                toast({
+                    message: err.message || err,
+                    type: "error",
+                });
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = null;
+                btn.innerText = "Đăng ký";
             });
-        } finally {
-            btn.disabled = false;
-        }
+
     });
 </script>

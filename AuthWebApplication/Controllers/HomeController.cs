@@ -31,20 +31,20 @@ public class HomeController(AuthContext db, ILogger<HomeController> logger) : Co
         if(user == null)
         {
             _logger.LogInformation("Cant find user");
-            return NotFound(new {message = "No user"});
+            return NotFound(new {message = "Không tìm thấy người dùng"});
         }
 
-        if(!BCrypt.Net.BCrypt.Verify(changePasswordDTO.OldPassword, user.Password))
+        if(!BCrypt.Net.BCrypt.Verify(user.Username + changePasswordDTO.OldPassword, user.Password))
         {
 
             _logger.LogInformation("Wrong password");
-            return BadRequest(new {message = "No user"});
+            return BadRequest(new {message = "Sai mật khẩu cũ"});
             
         }
         user.Password = BCrypt.Net.BCrypt.HashPassword(changePasswordDTO.NewPassword);
         _db.SaveChanges();
 
-        return Ok(new {messsage = "Change password succesfully"});
+        return Ok(new {messsage = "Đổi mật khẩu thành công"});
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

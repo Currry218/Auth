@@ -6,9 +6,8 @@ using dotenv.net;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-// builder.Services.AddDbContext<AuthContext>();
-// builder.Services.AddDbContext<AuthContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-builder.Services.AddDbContext<AuthContext>(options => options.UseNpgsql(Environment.GetEnvironmentVariable("DB_CONNECTION_STRING")));
+builder.Services.AddDbContext<AuthContext>();
+// builder.Services.AddDbContext<AuthContext>(options => options.UseNpgsql(Environment.GetEnvironmentVariable("DB_CONNECTION_STRING")));
 
 
 // add cookie authentication
@@ -55,10 +54,18 @@ app.UseAuthorization();
 app.MapStaticAssets();
 // app.MapRazorPages();
 // app.MapDefaultControllerRoute();
+//  app.Use(async (context, next) =>
+//     {
+//         await next();
+//         if (context.Response.StatusCode == 404)
+//         {
+//             context.Request.Path = "/Home";
+//             await next();
+//         }
+//     });
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Auth}/{action=Login}/{id?}")
     .WithStaticAssets();
-
 app.Run();

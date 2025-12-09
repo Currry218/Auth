@@ -4,22 +4,26 @@
   ViewData["Title"] = "Login";
 }
 
-<div class="min-vh-100 d-flex align-items-center justify-content-center bg-light">
-  <div class="card shadow-lg p-4" style="width: 420px; border-radius: 20px;">
+<div class="min-vh-100 d-flex align-items-center justify-content-center ">
+  <div class="card shadow p-4 my-2" style="width: 420px; border-radius: 20px;">
     <h3 class="text-center mb-4 fw-bold">Đăng nhập</h3>
+    @if (@ViewBag.Message != null)
+    {
+      <div class="text-center alert alert-primary ">@ViewBag.Message</div>
+
+    }
 
     <form id="login-form">
       <div class="mb-3">
         <label class="form-label fw-semibold">Tên đăng nhập</label>
-        <input value="admin" type="text" name="loginname" class="form-control" placeholder="Username hoặc Email"
-          required>
+        <input type="text" name="loginname" class="form-control" placeholder="Username hoặc Email" required>
       </div>
 
       <div class="mb-2">
         <label class="form-label fw-semibold">Mật khẩu</label>
 
         <div class="input-group">
-          <input value="123" type="password" id="password" name="password" class="form-control" required>
+          <input type="password" id="password" name="password" class="form-control" required>
           <button class="btn btn-outline-secondary bi bi-eye-slash togglePassword" type="button"
             id="togglePassword"></button>
         </div>
@@ -31,7 +35,7 @@
         </a>
       </div>
 
-      <button type="submit" class="btn btn-dark w-100 btn-lg mb-3" id="login-button">
+      <button type="submit" class="btn btn-dark w-100 btn-lg mb-3 d-flex justify-content-center" id="login-button">
         Đăng nhập
       </button>
     </form>
@@ -46,7 +50,7 @@
       <div class="mt-2">
         <button class="btn btn-outline-primary btn-lg rounded-circle mx-1 bi bi-facebook">
         </button>
-        <button class="btn btn-outline-danger btn-lg rounded-circle mx-1 bi bi-google">
+        <button class="btn btn-outline-danger btn-lg rounded-circle bi bi-google">
         </button>
       </div>
     </div>
@@ -72,7 +76,7 @@
 
     const btn = document.getElementById("login-button");
     btn.disabled = true;
-
+    btn.innerHTML = "<div class='spinner-border' role='status'> </div>";
     const data = new FormData(this);
 
     fetch('/Auth/Login', {
@@ -86,22 +90,25 @@
       .then(async response => {
 
         if (!response.ok) {
-          const err = await response.text();
-          throw new Error(err.message || "Reset password failed");
-        } 
+          const err = await response.json();
+          throw new Error(err.message);
+        }
         return response.json();
       })
       .then(result => {
-        @* window.location.replace("/Home/Index"); *@
+        window.location.replace("/Home/Index");
       })
       .catch(err => {
+        console.log(err)
         toast({
-          message: err.message,
+          message: err.message || err,
           type: "error",
         });
       })
       .finally(() => {
         btn.disabled = false;
+        btn.innerHTML = null;
+        btn.innerText = "Đăng nhập";
       });
   });  
 </script>
