@@ -32,13 +32,6 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
-// var cookiePolicyOptions = new CookiePolicyOptions
-// {
-//     MinimumSameSitePolicy = SameSiteMode.Strict,
-// };
-
-// app.UseCookiePolicy(cookiePolicyOptions);
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -52,18 +45,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
-// app.MapRazorPages();
-// app.MapDefaultControllerRoute();
-//  app.Use(async (context, next) =>
-//     {
-//         await next();
-//         if (context.Response.StatusCode == 404)
-//         {
-//             context.Request.Path = "/Home";
-//             await next();
-//         }
-//     });
-
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Auth}/{action=Login}/{id?}")

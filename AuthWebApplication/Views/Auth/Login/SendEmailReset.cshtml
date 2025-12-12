@@ -36,7 +36,7 @@
         </div>
 
         <div class="modal-footer border-0">
-          <button type="submit" class="btn btn-dark w-100">Xác nhận</button>
+          <button type="submit" class="btn btn-dark w-100" id="send-otp-button">Xác nhận</button>
         </div>
 
       </form>
@@ -54,7 +54,6 @@
 
     const data = new FormData(this);
 
-    // Send as multipart/form-data so model binding can read form fields
     fetch('/Auth/ForgotPassword', {
       method: 'POST',
       body: data
@@ -85,4 +84,43 @@
         btn.innerText = "Gửi OTP";
       });
   });
+    document.getElementById("otp-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const btn = document.getElementById("send-otp-button");
+    btn.disabled = true;
+    btn.innerHTML = "<div class='spinner-border' role='status'> </div>";
+
+    const data = new FormData(this);
+@* 
+    fetch('/Auth/VerifyOTP', {
+      method: 'POST',
+      body: data
+    })
+      .then(async response => {
+
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.message || "Reset password failed");
+        }
+        const ct = response.headers.get('content-type') || '';
+        return ct.includes('application/json') ? response.json() : response.text();
+      })
+      .then(result => {
+        this.style.display = "none";
+        document.getElementById("otp-form").style.display = "block";
+        document.getElementById("account-otp").value = data.get("account");
+      })
+      .catch(err => {
+        toast({
+          message: err.message || err,
+          type: "error",
+        });
+      })
+      .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = null;
+        btn.innerText = "Gửi OTP";
+      });
+  }); *@
 </script>

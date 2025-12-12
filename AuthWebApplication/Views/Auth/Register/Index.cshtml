@@ -18,7 +18,7 @@
                     <label class="form-label fw-semibold">Username
                         <span class="text-danger">*</span>
                     </label>
-                    <input type="text" class="form-control" name="uname" required>
+                    <input type="text" maxlength="100" class="form-control" name="uname" required>
                 </div>
 
                 <!-- Email -->
@@ -51,7 +51,7 @@
                 <!-- Fullname -->
                 <div class="col-md-6 mb-2">
                     <label class="form-label fw-semibold">Họ tên</label>
-                    <input type="text" class="form-control" name="fullname">
+                    <input type="text" maxlength="200" class="form-control" name="fullname">
                 </div>
 
                 <!-- Role -->
@@ -120,12 +120,12 @@
             await croppie.result("blob").then(function (blob) {
                 avt = new File([blob], form.get("uname") + "_avatar.png", { type: "image/png" });
             });
-        send.append("username", form.get("uname"));
-        send.append("email", form.get("email"));
-        send.append("password", form.get("password"));
-        send.append("fullname", form.get("fullname"));
+        send.append("username", form.get("uname").trim());
+        send.append("email", form.get("email").trim());
+        send.append("password", form.get("password").trim());
+        send.append("fullname", form.get("fullname").trim());
         send.append("address", address);
-        send.append("phonenumber", form.get("sdt"));
+        send.append("phonenumber", form.get("sdt").trim());
         send.append("role", form.get("role"));
         send.append("avatar", avt);
 

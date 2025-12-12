@@ -7,13 +7,12 @@ using System.Security.Claims;
 
 namespace AuthWebApplication.Controllers;
 
-// TODO: try to get user in whole class then use 
+[Authorize]
 public class HomeController(AuthContext db, ILogger<HomeController> logger) : Controller
 {
     private readonly ILogger<HomeController> _logger = logger;
     private readonly AuthContext _db = db;
 
-    [Authorize]
     public async Task<IActionResult> Index()
     {
         var uname = HttpContext.User.FindFirstValue(ClaimTypes.Name);
@@ -22,9 +21,18 @@ public class HomeController(AuthContext db, ILogger<HomeController> logger) : Co
     }
 
     [HttpPost]
-    [Authorize]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDTO changePasswordDTO)
     {
+        if(string.IsNullOrEmpty(changePasswordDTO.OldPassword) || string.IsNullOrEmpty(changePasswordDTO.NewPassword))
+        {
+            _logger.LogWarning("Change password failed: invalid");
+            return BadRequest(new { message = "Không thể đổi mật khẩu" });            
+        }
+        if (!ModelState.IsValid)
+        {
+            _logger.LogWarning("Change password failed: invalid model");
+            return BadRequest(new { message = "Không thể đổi mật khẩu" });
+        }
         var uname = HttpContext.User.FindFirstValue(ClaimTypes.Name);
         
         var user = await _db.Users.FirstOrDefaultAsync(x => x.Username == uname);
